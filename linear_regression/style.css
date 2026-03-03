@@ -168,11 +168,9 @@ button:disabled {
 }
 
 canvas {
-  width: min(100%, 620px);
-  aspect-ratio: 1 / 1;
-  height: auto;
+  width: 100%;
+  height: clamp(300px, 58vh, 620px);
   display: block;
-  margin: 0 auto;
   border-radius: 8px;
   background: #050608;
 }
@@ -234,5 +232,9 @@ canvas {
 
   .actions {
     grid-column: 1 / -1;
+  }
+
+  canvas {
+    height: clamp(260px, 50vh, 420px);
   }
 }

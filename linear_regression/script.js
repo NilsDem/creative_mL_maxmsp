@@ -393,9 +393,24 @@ function drawResiduals(points, color, toCanvas) {
   ctx.restore();
 }
 
+function syncCanvasSize() {
+  const dpr = window.devicePixelRatio || 1;
+  const width = Math.max(1, Math.floor(canvas.clientWidth));
+  const height = Math.max(1, Math.floor(canvas.clientHeight));
+  const pixelWidth = Math.floor(width * dpr);
+  const pixelHeight = Math.floor(height * dpr);
+
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { width, height };
+}
+
 function renderPlot() {
-  const width = canvas.width;
-  const height = canvas.height;
+  const { width, height } = syncCanvasSize();
 
   ctx.fillStyle = colors.bg;
   ctx.fillRect(0, 0, width, height);
@@ -546,6 +561,8 @@ trainBtn.addEventListener("click", () => {
   syncToggles();
   trainModelProgressive();
 });
+
+window.addEventListener("resize", renderPlot);
 
 syncStateFromInputs();
 syncToggles();
