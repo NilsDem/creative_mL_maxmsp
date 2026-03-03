@@ -8,12 +8,13 @@
 </h1>
 
 <h3>Creative Machine Learning in MaxMSP and Ableton Live.</h3>
-</div>
+
 
 <center>
 <i>Course given at IRCAM in March 2026 by <a href="http://esling.github.io" target="_blank">Axel Chemla-Romeu-Santos</a> and Nils Demerlé</i>
 </center>
 
+</div>
 <!-- <h4>
   <a href="#lessons">Lessons</a> •
   <a href="#setup">Setup</a> •
