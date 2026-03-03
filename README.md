@@ -38,10 +38,10 @@ This course provides a brief history of the development of artificial intelligen
 
 To complement the slides, two browser-based interactive demos are available:
 
-**[Polynomial Regression](https://nilsdem.github.io/CreativeML_MaxMsp/linear_regression/)** – Basic machine learning problem of polynomial regression with gradient descent.
+**[Polynomial Regression](https://nilsdem.github.io/creative_mL_maxmsp/linear_regression/)** – Basic machine learning problem of polynomial regression with gradient descent.
 
 
-**[MNIST VAE Playground](https://nilsdem.github.io/CreativeML_MaxMsp/mnist_vae/)** – Train a small VAE on the Mnist dataset and explore its 2D latent space. 
+**[MNIST VAE Playground](https://nilsdem.github.io/creative_mL_maxmsp/mnist_vae/)** – Train a small VAE on the Mnist dataset and explore its 2D latent space. 
 
 
 
