@@ -32,7 +32,7 @@
 ### Course 1 - Introduction
 
 [![Slides](https://img.shields.io/badge/Slides-online-7DA416.svg?style=flat-square&logo=googledrive)](https://docs.google.com/presentation/d/e/2PACX-1vS7jtXgz47zBndZKddheEhmPcGp-layY3UjzQ23qqf0SjEwAJ6hQpgoZs3gVjyQVc8QCzqsV9FLXOeX/pub?start=false&loop=false&delayms=60000) 
-[![Powerpoint](https://img.shields.io/badge/Slides-download-167DA4.svg?style=flat-square&logo=files)](00_introduction.pdf) 
+<!-- [![Powerpoint](https://img.shields.io/badge/Slides-download-167DA4.svg?style=flat-square&logo=files)](00_introduction.pdf)  -->
 
 This course provides a brief history of the development of artificial intelligence and introduces general concepts of machine learning through simple examples, before jumping in more recent applications to music. 
 
@@ -47,7 +47,15 @@ To complement the slides, two browser-based interactive demos are available:
 
 
 ### Course 2 - ACIDS tools : Rave, After and nn~
-TBA
+[![Slides](https://img.shields.io/badge/Slides-online-7DA416.svg?style=flat-square&logo=googledrive)](https://docs.google.com/presentation/d/e/2PACX-1vQHKUGpOXmu9uhg89y12WygJ4wMK6QQhuxsTIrDbW9Fm75eU4OP-Kw_xtZmD-IAMuCsSMIe3d-AAZFW/pub?start=false&loop=false&delayms=3000) 
+
+This course focuses on embedding neural tools (Demucs, Rave, VSChaos and AFTER) in MaxMSP and Ableton Live using the nn~ library. To follow the course you will need to download models and max patches [here](https://drive.google.com/drive/folders/1C2XaZxJYSKG5VBf_RK1uO5W5R1bA06d5?usp=sharing).
+
+Additionaly, you need to install nn~ : https://github.com/acids-ircam/nn_tilde.
+
+**[PCA](https://nilsdem.github.io/creative_mL_maxmsp/demo_pca/)** – Playground to experiement with Principal Component Analysis (PCA) from 3D data to 2D PCA representation. 
+
+
 
 ### Course 3 - Train and bend your own models
 TBA

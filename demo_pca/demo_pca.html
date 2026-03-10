@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PCA Explorer: 3D Source to 1D/2D/3D Target</title>
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --border: #d9deea;
+      --text: #1f2937;
+      --muted: #5b6475;
+      --accent: #2563eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 18px 22px 8px;
+    }
+
+    header h1 {
+      margin: 0 0 6px;
+      font-size: 1.4rem;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .controls {
+      margin: 14px 22px 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px 14px;
+      align-items: end;
+    }
+
+    .control {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    select, input[type="range"], button {
+      width: 100%;
+    }
+
+    select, button {
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 0.95rem;
+    }
+
+    button {
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+      border: none;
+      font-weight: 600;
+    }
+
+    button:hover {
+      filter: brightness(0.96);
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .range-value {
+      min-width: 42px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 28px;
+      font-size: 0.95rem;
+    }
+
+    .plots {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      padding: 0 22px 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .panel h2 {
+      margin: 0;
+      padding: 12px 14px;
+      font-size: 1rem;
+      border-bottom: 1px solid var(--border);
+      background: #fbfcff;
+    }
+
+    .plot {
+      width: 100%;
+      height: 460px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 14px;
+      padding: 0 22px 22px;
+    }
+
+    .info-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .info-panel h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .math {
+      background: #f9fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .stat-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      background: #fcfdff;
+    }
+
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.93rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 8px 6px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th:first-child, td:first-child {
+      text-align: left;
+    }
+
+    .note {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .legend-note {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 1000px) {
+      .plots, .info-grid {
+        grid-template-columns: 1fr;
+      }
+      .plot {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Principal Component Analysis Explorer</h1>
+    <p>
+      PCA finds the orthogonal directions of greatest variance in a dataset.
+      This app starts with points in a 3D source space and projects them into a target space of 1, 2, or 3 dimensions.
+    </p>
+  </header>
+
+  <section class="controls">
+    <div class="control">
+      <label for="dataset">Point set</label>
+      <select id="dataset">
+        <option value="line">Noisy line</option>
+        <option value="plane">Noisy plane</option>
+        <option value="cloud">Anisotropic cloud</option>
+        <option value="clusters">Clusters</option>
+        <option value="sphere">Sphere</option>
+        <option value="helix">Helix</option>
+      </select>
+    </div>
+
+    <div class="control">
+      <label for="targetDim">Target dimension</label>
+      <select id="targetDim">
+        <option value="1">1D</option>
+        <option value="2" selected>2D</option>
+        <option value="3">3D</option>
+      </select>
+    </div>
+
+    <div class="control">
+      <label for="count">Number of points</label>
+      <div class="range-row">
+        <input id="count" type="range" min="30" max="350" step="10" value="140" />
+        <div class="range-value" id="countValue">140</div>
+      </div>
+    </div>
+
+    <div class="control">
+      <label for="noise">Noise</label>
+      <div class="range-row">
+        <input id="noise" type="range" min="0" max="1.2" step="0.05" value="0.25" />
+        <div class="range-value" id="noiseValue">0.25</div>
+      </div>
+    </div>
+
+    <div class="control">
+      <button id="regen">Regenerate points</button>
+    </div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="showReconstruction" checked />
+      <label for="showReconstruction" style="margin:0;font-weight:500;">Show reconstructed points in source space</label>
+    </div>
+  </section>
+
+  <section class="plots">
+    <div class="panel">
+      <h2>Source 3D Space</h2>
+      <div id="sourcePlot" class="plot"></div>
+    </div>
+    <div class="panel">
+      <h2>Target PCA Space</h2>
+      <div id="targetPlot" class="plot"></div>
+    </div>
+  </section>
+
+  <section class="info-grid">
+    <div class="info-panel">
+      <h3>What PCA is doing here</h3>
+      <div id="explanation" class="note"></div>
+      <div class="legend-note">
+        In the source plot: blue = original points, orange = reconstruction using the chosen number of principal components,
+        red/green/purple = PC1/PC2/PC3 axes.
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <h3>Current PCA numbers</h3>
+      <div class="stats" id="stats"></div>
+      <div id="details"></div>
+    </div>
+  </section>
+
+  <script>
+    const datasetEl = document.getElementById("dataset");
+    const targetDimEl = document.getElementById("targetDim");
+    const countEl = document.getElementById("count");
+    const noiseEl = document.getElementById("noise");
+    const regenEl = document.getElementById("regen");
+    const showReconstructionEl = document.getElementById("showReconstruction");
+    const countValueEl = document.getElementById("countValue");
+    const noiseValueEl = document.getElementById("noiseValue");
+    const explanationEl = document.getElementById("explanation");
+    const statsEl = document.getElementById("stats");
+    const detailsEl = document.getElementById("details");
+
+    let seed = Math.floor(Math.random() * 1e9);
+
+    function mulberry32(a) {
+      return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function gaussian(rng) {
+      let u = 0, v = 0;
+      while (u === 0) u = rng();
+      while (v === 0) v = rng();
+      return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    }
+
+    function dot(a, b) {
+      return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+    }
+
+    function add(a, b) {
+      return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];
+    }
+
+    function sub(a, b) {
+      return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+    }
+
+    function scale(a, s) {
+      return [a[0]*s, a[1]*s, a[2]*s];
+    }
+
+    function norm(a) {
+      return Math.sqrt(dot(a, a));
+    }
+
+    function normalize(a) {
+      const n = norm(a) || 1;
+      return [a[0]/n, a[1]/n, a[2]/n];
+    }
+
+    function cross(a, b) {
+      return [
+        a[1]*b[2] - a[2]*b[1],
+        a[2]*b[0] - a[0]*b[2],
+        a[0]*b[1] - a[1]*b[0]
+      ];
+    }
+
+    function orthonormalBasis() {
+      const u = normalize([1.0, 0.35, 0.7]);
+      const v0 = [-0.2, 1.0, 0.4];
+      const proj = scale(u, dot(v0, u));
+      const v = normalize(sub(v0, proj));
+      const w = normalize(cross(u, v));
+      return { u, v, w };
+    }
+
+    function generateDataset(type, n, noise, seedValue) {
+      const rng = mulberry32(seedValue);
+      const { u, v, w } = orthonormalBasis();
+      const pts = [];
+      const colorValues = [];
+      const notes = {
+        line: "Most variation lies along one direction, so 1D PCA should keep almost all of the information.",
+        plane: "The data is mostly two-dimensional inside 3D, so 2D PCA should preserve nearly all variance.",
+        cloud: "This cloud is stretched more in some directions than others, so PCA reveals the major axes of spread.",
+        clusters: "PCA can capture broad between-cluster structure, though it does not explicitly know about clusters.",
+        sphere: "A sphere has similar variance in every direction, so PCA has no single strongly preferred axis.",
+        helix: "A helix is curved, so PCA can only give the best linear approximation, not a perfect low-dimensional description."
+      };
+
+      if (type === "line") {
+        const d = normalize([1.0, 0.45, -0.65]);
+        for (let i = 0; i < n; i++) {
+          const t = (rng() * 2 - 1) * 3.3;
+          const p = add(scale(d, t), [
+            gaussian(rng) * noise,
+            gaussian(rng) * noise,
+            gaussian(rng) * noise
+          ]);
+          pts.push(p);
+          colorValues.push(t);
+        }
+      } else if (type === "plane") {
+        for (let i = 0; i < n; i++) {
+          const a = (rng() * 2 - 1) * 2.7;
+          const b = (rng() * 2 - 1) * 2.7;
+          let p = [0, 0, 0];
+          p = add(p, scale(u, a + gaussian(rng) * noise * 0.2));
+          p = add(p, scale(v, b + gaussian(rng) * noise * 0.2));
+          p = add(p, scale(w, gaussian(rng) * noise * 0.9));
+          pts.push(p);
+          colorValues.push(a);
+        }
+      } else if (type === "cloud") {
+        for (let i = 0; i < n; i++) {
+          const a = gaussian(rng) * (2.3 + noise * 0.2);
+          const b = gaussian(rng) * (0.95 + noise * 0.2);
+          const c = gaussian(rng) * (0.22 + noise * 0.35);
+          let p = [0, 0, 0];
+          p = add(p, scale(u, a));
+          p = add(p, scale(v, b));
+          p = add(p, scale(w, c));
+          pts.push(p);
+          colorValues.push(a);
+        }
+      } else if (type === "clusters") {
+        const centers = [
+          [2.3, 2.2, 1.3],
+          [-2.5, -1.2, -0.8],
+          [1.4, -2.4, 2.0]
+        ];
+        for (let i = 0; i < n; i++) {
+          const k = Math.floor(rng() * centers.length);
+          const c = centers[k];
+          const p = [
+            c[0] + gaussian(rng) * (0.45 + noise * 0.9),
+            c[1] + gaussian(rng) * (0.35 + noise * 0.8),
+            c[2] + gaussian(rng) * (0.40 + noise * 0.8)
+          ];
+          pts.push(p);
+          colorValues.push(k);
+        }
+      } else if (type === "sphere") {
+        for (let i = 0; i < n; i++) {
+          let d = [gaussian(rng), gaussian(rng), gaussian(rng)];
+          d = normalize(d);
+          const r = 2.2 + gaussian(rng) * noise * 0.45;
+          const p = scale(d, r);
+          pts.push(p);
+          colorValues.push(p[2]);
+        }
+      } else if (type === "helix") {
+        for (let i = 0; i < n; i++) {
+          const t = (i / Math.max(1, n - 1)) * Math.PI * 4.5;
+          const p = [
+            2.0 * Math.cos(t) + gaussian(rng) * noise * 0.5,
+            2.0 * Math.sin(t) + gaussian(rng) * noise * 0.5,
+            0.55 * (t - Math.PI * 2.25) + gaussian(rng) * noise * 0.8
+          ];
+          pts.push(p);
+          colorValues.push(t);
+        }
+      }
+
+      return { points: pts, colorValues, note: notes[type] };
+    }
+
+    function meanPoint(points) {
+      const m = [0, 0, 0];
+      for (const p of points) {
+        m[0] += p[0];
+        m[1] += p[1];
+        m[2] += p[2];
+      }
+      const n = points.length || 1;
+      return [m[0]/n, m[1]/n, m[2]/n];
+    }
+
+    function centerPoints(points, mean) {
+      return points.map(p => sub(p, mean));
+    }
+
+    function covariance3(centered) {
+      const C = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+      ];
+      const d = Math.max(1, centered.length - 1);
+      for (const p of centered) {
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            C[i][j] += p[i] * p[j];
+          }
+        }
+      }
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          C[i][j] /= d;
+        }
+      }
+      return C;
+    }
+
+    function jacobiEigenSymmetric3(Ain) {
+      const n = 3;
+      const A = Ain.map(row => row.slice());
+      const V = [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1]
+      ];
+
+      for (let iter = 0; iter < 60; iter++) {
+        let p = 0, q = 1;
+        let max = Math.abs(A[0][1]);
+
+        for (let i = 0; i < n; i++) {
+          for (let j = i + 1; j < n; j++) {
+            const val = Math.abs(A[i][j]);
+            if (val > max) {
+              max = val;
+              p = i;
+              q = j;
+            }
+          }
+        }
+
+        if (max < 1e-12) break;
+
+        const app = A[p][p];
+        const aqq = A[q][q];
+        const apq = A[p][q];
+
+        const phi = 0.5 * Math.atan2(2 * apq, aqq - app);
+        const c = Math.cos(phi);
+        const s = Math.sin(phi);
+
+        for (let k = 0; k < n; k++) {
+          if (k !== p && k !== q) {
+            const aik = A[k][p];
+            const akq = A[k][q];
+            const new_kp = c * aik - s * akq;
+            const new_kq = s * aik + c * akq;
+            A[k][p] = A[p][k] = new_kp;
+            A[k][q] = A[q][k] = new_kq;
+          }
+        }
+
+        const new_app = c*c*app - 2*s*c*apq + s*s*aqq;
+        const new_aqq = s*s*app + 2*s*c*apq + c*c*aqq;
+        A[p][p] = new_app;
+        A[q][q] = new_aqq;
+        A[p][q] = A[q][p] = 0;
+
+        for (let k = 0; k < n; k++) {
+          const vip = V[k][p];
+          const viq = V[k][q];
+          V[k][p] = c * vip - s * viq;
+          V[k][q] = s * vip + c * viq;
+        }
+      }
+
+      const eigenvalues = [A[0][0], A[1][1], A[2][2]];
+      const eigenvectors = [
+        normalize([V[0][0], V[1][0], V[2][0]]),
+        normalize([V[0][1], V[1][1], V[2][1]]),
+        normalize([V[0][2], V[1][2], V[2][2]])
+      ];
+
+      const pairs = eigenvalues.map((value, i) => ({
+        value,
+        vector: eigenvectors[i]
+      })).sort((a, b) => b.value - a.value);
+
+      return {
+        values: pairs.map(p => p.value),
+        vectors: pairs.map(p => p.vector)
+      };
+    }
+
+    function performPCA(points, k) {
+      const mean = meanPoint(points);
+      const centered = centerPoints(points, mean);
+      const cov = covariance3(centered);
+      const eig = jacobiEigenSymmetric3(cov);
+
+      const scores = centered.map(p => eig.vectors.map(v => dot(p, v)));
+      const projected = scores.map(s => s.slice(0, k));
+
+      const reconstructed = scores.map(s => {
+        let r = mean.slice();
+        for (let j = 0; j < k; j++) {
+          r = add(r, scale(eig.vectors[j], s[j]));
+        }
+        return r;
+      });
+
+      let totalVar = eig.values.reduce((acc, x) => acc + Math.max(0, x), 0);
+      if (totalVar < 1e-12) totalVar = 1e-12;
+      const retained = eig.values.slice(0, k).reduce((acc, x) => acc + Math.max(0, x), 0) / totalVar;
+
+      let mse = 0;
+      for (let i = 0; i < points.length; i++) {
+        const d = sub(points[i], reconstructed[i]);
+        mse += dot(d, d);
+      }
+      mse /= points.length;
+
+      return {
+        mean,
+        centered,
+        covariance: cov,
+        eigenvalues: eig.values,
+        eigenvectors: eig.vectors,
+        scores,
+        projected,
+        reconstructed,
+        retainedVariance: retained,
+        mse
+      };
+    }
+
+    function fmt(x, digits = 3) {
+      return (Math.abs(x) < 1e-12 ? 0 : x).toFixed(digits);
+    }
+
+    function matrixHTML(M) {
+      return `
+        <table>
+          <thead>
+            <tr><th></th><th>x</th><th>y</th><th>z</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>x</td><td>${fmt(M[0][0])}</td><td>${fmt(M[0][1])}</td><td>${fmt(M[0][2])}</td></tr>
+            <tr><td>y</td><td>${fmt(M[1][0])}</td><td>${fmt(M[1][1])}</td><td>${fmt(M[1][2])}</td></tr>
+            <tr><td>z</td><td>${fmt(M[2][0])}</td><td>${fmt(M[2][1])}</td><td>${fmt(M[2][2])}</td></tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function vectorHTML(v) {
+      return `[${fmt(v[0])}, ${fmt(v[1])}, ${fmt(v[2])}]`;
+    }
+
+    function buildExplanation(datasetNote, k, retained) {
+      return `
+        <p><strong>Step 1:</strong> Compute the mean of the 3D points and subtract it, so PCA works on centered data.</p>
+        <p><strong>Step 2:</strong> Build the 3×3 covariance matrix. It tells us how the data spreads in different directions.</p>
+        <p><strong>Step 3:</strong> Find the eigenvectors of that covariance matrix. These are the principal component directions:
+           PC1 captures the most variance, PC2 the next most, and PC3 the least.</p>
+        <p><strong>Step 4:</strong> Keep only the first <strong>${k}</strong> principal component${k > 1 ? "s" : ""} and project each point onto them.</p>
+        <p><strong>Step 5:</strong> Reconstruct back into 3D using only those kept components. The more variance retained, the closer the reconstruction.</p>
+        <p><strong>This dataset:</strong> ${datasetNote}</p>
+        <p><strong>Current result:</strong> keeping ${k}D retains about <strong>${(retained * 100).toFixed(2)}%</strong> of the total variance.</p>
+        <div class="math">Projection:      z = W_k^T (x - μ)
+Reconstruction:  x̂ = μ + W_k z</div>
+      `;
+    }
+
+    function plotSource(points, reconstructed, mean, eigenvalues, eigenvectors, colors, showReconstruction) {
+      const xs = points.map(p => p[0]);
+      const ys = points.map(p => p[1]);
+      const zs = points.map(p => p[2]);
+
+      const traces = [{
+        type: "scatter3d",
+        mode: "markers",
+        x: xs,
+        y: ys,
+        z: zs,
+        name: "Original points",
+        marker: {
+          size: 4,
+          color: colors,
+          colorscale: "Viridis",
+          opacity: 0.88,
+          showscale: false
+        }
+      }];
+
+      if (showReconstruction) {
+        const rx = reconstructed.map(p => p[0]);
+        const ry = reconstructed.map(p => p[1]);
+        const rz = reconstructed.map(p => p[2]);
+
+        traces.push({
+          type: "scatter3d",
+          mode: "markers",
+          x: rx,
+          y: ry,
+          z: rz,
+          name: "Reconstructed",
+          marker: {
+            size: 3.5,
+            color: "orange",
+            opacity: 0.82
+          }
+        });
+
+        if (points.length <= 160) {
+          const lx = [], ly = [], lz = [];
+          for (let i = 0; i < points.length; i++) {
+            lx.push(points[i][0], reconstructed[i][0], null);
+            ly.push(points[i][1], reconstructed[i][1], null);
+            lz.push(points[i][2], reconstructed[i][2], null);
+          }
+          traces.push({
+            type: "scatter3d",
+            mode: "lines",
+            x: lx,
+            y: ly,
+            z: lz,
+            name: "Reconstruction error",
+            hoverinfo: "skip",
+            line: {
+              color: "rgba(120,120,120,0.35)",
+              width: 2
+            }
+          });
+        }
+      }
+
+      traces.push({
+        type: "scatter3d",
+        mode: "markers",
+        x: [mean[0]],
+        y: [mean[1]],
+        z: [mean[2]],
+        name: "Mean",
+        marker: {
+          size: 6,
+          color: "black",
+          symbol: "diamond"
+        }
+      });
+
+      const axisColors = ["#e11d48", "#059669", "#7c3aed"];
+      for (let i = 0; i < 3; i++) {
+        const len = 2.6 * Math.sqrt(Math.max(eigenvalues[i], 1e-8));
+        const v = eigenvectors[i];
+        traces.push({
+          type: "scatter3d",
+          mode: "lines",
+          x: [mean[0] - len*v[0], mean[0] + len*v[0]],
+          y: [mean[1] - len*v[1], mean[1] + len*v[1]],
+          z: [mean[2] - len*v[2], mean[2] + len*v[2]],
+          name: `PC${i+1}`,
+          line: {
+            color: axisColors[i],
+            width: 7
+          }
+        });
+      }
+
+      const layout = {
+        margin: { l: 0, r: 0, t: 10, b: 0 },
+        scene: {
+          xaxis: { title: "x", backgroundcolor: "#ffffff", gridcolor: "#e6ebf5" },
+          yaxis: { title: "y", backgroundcolor: "#ffffff", gridcolor: "#e6ebf5" },
+          zaxis: { title: "z", backgroundcolor: "#ffffff", gridcolor: "#e6ebf5" },
+          aspectmode: "data",
+          camera: {
+            eye: { x: 1.35, y: 1.35, z: 1.1 }
+          }
+        },
+        legend: { orientation: "h", y: 1.02 },
+        paper_bgcolor: "white",
+        plot_bgcolor: "white"
+      };
+
+      Plotly.react("sourcePlot", traces, layout, { responsive: true, displayModeBar: false });
+    }
+
+    function plotTarget(scores, colors, k) {
+      if (k === 1) {
+        const x = scores.map(s => s[0]);
+        const y = scores.map((_, i) => (((i * 37) % 100) / 100 - 0.5) * 0.16);
+
+        const traces = [{
+          type: "scatter",
+          mode: "markers",
+          x,
+          y,
+          marker: {
+            size: 8,
+            color: colors,
+            colorscale: "Viridis",
+            opacity: 0.88,
+            showscale: false
+          },
+          name: "Projected points"
+        }];
+
+        const layout = {
+          margin: { l: 55, r: 20, t: 12, b: 50 },
+          xaxis: { title: "PC1" },
+          yaxis: {
+            title: "",
+            showticklabels: false,
+            zeroline: false,
+            showgrid: false
+          },
+          paper_bgcolor: "white",
+          plot_bgcolor: "white"
+        };
+
+        Plotly.react("targetPlot", traces, layout, { responsive: true, displayModeBar: false });
+      } else if (k === 2) {
+        const traces = [{
+          type: "scatter",
+          mode: "markers",
+          x: scores.map(s => s[0]),
+          y: scores.map(s => s[1]),
+          marker: {
+            size: 8,
+            color: colors,
+            colorscale: "Viridis",
+            opacity: 0.88,
+            showscale: false
+          },
+          name: "Projected points"
+        }];
+
+        const layout = {
+          margin: { l: 55, r: 20, t: 12, b: 50 },
+          xaxis: { title: "PC1" },
+          yaxis: { title: "PC2" },
+          paper_bgcolor: "white",
+          plot_bgcolor: "white"
+        };
+
+        Plotly.react("targetPlot", traces, layout, { responsive: true, displayModeBar: false });
+      } else {
+        const traces = [{
+          type: "scatter3d",
+          mode: "markers",
+          x: scores.map(s => s[0]),
+          y: scores.map(s => s[1]),
+          z: scores.map(s => s[2]),
+          marker: {
+            size: 4.5,
+            color: colors,
+            colorscale: "Viridis",
+            opacity: 0.88,
+            showscale: false
+          },
+          name: "Projected points"
+        }];
+
+        const layout = {
+          margin: { l: 0, r: 0, t: 10, b: 0 },
+          scene: {
+            xaxis: { title: "PC1", backgroundcolor: "#ffffff", gridcolor: "#e6ebf5" },
+            yaxis: { title: "PC2", backgroundcolor: "#ffffff", gridcolor: "#e6ebf5" },
+            zaxis: { title: "PC3", backgroundcolor: "#ffffff", gridcolor: "#e6ebf5" },
+            aspectmode: "data",
+            camera: { eye: { x: 1.25, y: 1.25, z: 1.05 } }
+          },
+          paper_bgcolor: "white",
+          plot_bgcolor: "white"
+        };
+
+        Plotly.react("targetPlot", traces, layout, { responsive: true, displayModeBar: false });
+      }
+    }
+
+    function updateNumbers(pca, k) {
+      const ev = pca.eigenvalues.map(v => Math.max(0, v));
+      const total = ev.reduce((a, b) => a + b, 0) || 1;
+      const ratios = ev.map(v => v / total);
+
+      statsEl.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Retained variance</div>
+          <div class="stat-value">${(pca.retainedVariance * 100).toFixed(2)}%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Reconstruction MSE</div>
+          <div class="stat-value">${fmt(pca.mse, 4)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Chosen target dimension</div>
+          <div class="stat-value">${k}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Mean vector μ</div>
+          <div class="stat-value" style="font-size:0.92rem;">${vectorHTML(pca.mean)}</div>
+        </div>
+      `;
+
+      detailsEl.innerHTML = `
+        <div class="note"><strong>Covariance matrix</strong></div>
+        ${matrixHTML(pca.covariance)}
+
+        <div class="note" style="margin-top:12px;"><strong>Principal components</strong></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Eigenvalue</th>
+              <th>Explained variance</th>
+              <th>Direction</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>PC1</td>
+              <td>${fmt(ev[0])}</td>
+              <td>${(ratios[0] * 100).toFixed(2)}%</td>
+              <td>${vectorHTML(pca.eigenvectors[0])}</td>
+            </tr>
+            <tr>
+              <td>PC2</td>
+              <td>${fmt(ev[1])}</td>
+              <td>${(ratios[1] * 100).toFixed(2)}%</td>
+              <td>${vectorHTML(pca.eigenvectors[1])}</td>
+            </tr>
+            <tr>
+              <td>PC3</td>
+              <td>${fmt(ev[2])}</td>
+              <td>${(ratios[2] * 100).toFixed(2)}%</td>
+              <td>${vectorHTML(pca.eigenvectors[2])}</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function update() {
+      countValueEl.textContent = countEl.value;
+      noiseValueEl.textContent = Number(noiseEl.value).toFixed(2);
+
+      const dataset = datasetEl.value;
+      const k = parseInt(targetDimEl.value, 10);
+      const n = parseInt(countEl.value, 10);
+      const noise = parseFloat(noiseEl.value);
+      const showReconstruction = showReconstructionEl.checked;
+
+      const generated = generateDataset(dataset, n, noise, seed);
+      const pca = performPCA(generated.points, k);
+
+      plotSource(
+        generated.points,
+        pca.reconstructed,
+        pca.mean,
+        pca.eigenvalues,
+        pca.eigenvectors,
+        generated.colorValues,
+        showReconstruction
+      );
+
+      plotTarget(pca.scores, generated.colorValues, k);
+      explanationEl.innerHTML = buildExplanation(generated.note, k, pca.retainedVariance);
+      updateNumbers(pca, k);
+    }
+
+    datasetEl.addEventListener("change", update);
+    targetDimEl.addEventListener("change", update);
+    countEl.addEventListener("input", update);
+    noiseEl.addEventListener("input", update);
+    showReconstructionEl.addEventListener("change", update);
+    regenEl.addEventListener("click", () => {
+      seed = Math.floor(Math.random() * 1e9);
+      update();
+    });
+
+    window.addEventListener("resize", () => {
+      Plotly.Plots.resize("sourcePlot");
+      Plotly.Plots.resize("targetPlot");
+    });
+
+    update();
+  </script>
+</body>
+</html>
