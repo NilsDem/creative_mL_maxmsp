@@ -57,8 +57,15 @@ Additionaly, you need to install nn~ : https://github.com/acids-ircam/nn_tilde.
 
 
 
-### Course 3 - Train and bend your own models
-TBA
+### Course 3 - Train and your own models
+
+[![Slides](https://img.shields.io/badge/Slides-online-7DA416.svg?style=flat-square&logo=googledrive)](https://docs.google.com/presentation/d/e/2PACX-1vRGGOIT3HYZk731cOpmE6dW4GnZrM3TVTEht4TatUBncRO2GqIBl8e2c8truCKGpS6-uxCXxK7Lx6Kc/pub?start=false&loop=false&delayms=60000) 
+
+This course provides the basics knowledge required to train your own model in Pytorch. In this repository, you can find detailed code and instructions to train a DDSP model (monophonic additionnal synthesis). You can train the model locally or using [google collab](https://colab.research.google.com/). Detailed instructions can be found in [this readme](ddsp_pytorch/README.md).
+
+
+
+
 
 ### Course 4 - Personnal projects
 TBA
