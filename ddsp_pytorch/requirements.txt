@@ -1,0 +1,16 @@
+numpy>=1.19.4
+librosa==0.10.0
+torchaudio>=2.0.0
+einops>=0.3.0
+tqdm>=4.46.0
+torch>=2.0.0
+effortless_config>=0.7.0
+SoundFile>=0.10.3.post1
+Flask>=1.1.2
+PyYAML>=5.3.1
+tensorflow
+tensorboard
+torchcrepe==0.0.23
+nn-tilde==1.5.6
+cached-conv==2.5.0
+scipy
