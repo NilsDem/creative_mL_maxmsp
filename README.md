@@ -57,7 +57,7 @@ Additionaly, you need to install nn~ : https://github.com/acids-ircam/nn_tilde.
 
 
 
-### Course 3 - Train and your own models
+### Course 3 - Model Training
 
 [![Slides](https://img.shields.io/badge/Slides-online-7DA416.svg?style=flat-square&logo=googledrive)](https://docs.google.com/presentation/d/e/2PACX-1vRGGOIT3HYZk731cOpmE6dW4GnZrM3TVTEht4TatUBncRO2GqIBl8e2c8truCKGpS6-uxCXxK7Lx6Kc/pub?start=false&loop=false&delayms=60000) 
 
