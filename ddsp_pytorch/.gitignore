@@ -2,7 +2,7 @@
 *DS_Store
 *runs*
 *__pycache__*
-exports/*
+# exports/*
 preprocessed/*
 *pycache*
 perso/*
